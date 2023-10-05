@@ -22,7 +22,6 @@ class App:
 
         self.create_main_frame()
         self.create_graph()
-        self.connect_to_arduino('COM')
 
     def create_main_frame(self):
         main_frame = ttk.Frame(self.root)
@@ -61,7 +60,7 @@ class App:
         if not self.arduino_connected:
             messagebox.showerror("Erro", "Arduino não está conectado")
             return
-
+        self.connect_to_arduino("COM")
         self.start_arduino_process()
         self.running = True
         self.start_button.configure(text="Stop")
@@ -94,7 +93,7 @@ class App:
         self.time_value.set(value)
 
     def read_data(self):
-        # read ports A0 and A1 to get DDP and convert to Current
+        # read ports A0 and A1 to get DDP and CONVERT TO CURRENT AND UPDATE GRAPH
         ...
 
     def connect_to_arduino(self, port):
@@ -105,7 +104,6 @@ class App:
         except Exception as e:
             messagebox.showerror("Erro", f"Erro ao conectar ao Arduino: {str(e)}")
             self.arduino_connected = False
-        pass
 
     def start_arduino_process(self):
         try:
