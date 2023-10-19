@@ -33,49 +33,15 @@ void setup() {
 }
 
 void loop() {
-  // Turning on hot plate
-  turnHotPlateRelay("start");
+  // Check serial available for read commands
+  if (Serial.available() > 0) {
+    // Turning on hot plate
+    turnHotPlateRelay("start");
 
-  // Setting RED (R) filtered photodiodes to be read
-  digitalWrite(S2,LOW);
-  digitalWrite(S3,LOW);
-  
-  // Reading the output frequency
-  redFrequency = pulseIn(sensorOut, LOW);
-  // Remaping the value of the RED (R) frequency from 0 to 255
-  // You must replace with your own values. Here's an example: 
-  // redColor = map(redFrequency, 70, 120, 255, 0);
-  redColor = map(redFrequency, 70, 120, 255, 0);
-  
-  // Setting GREEN (G) filtered photodiodes to be read
-  digitalWrite(S2,HIGH);
-  digitalWrite(S3,HIGH);
-  
-  // Reading the output frequency
-  greenFrequency = pulseIn(sensorOut, LOW);
-  // Remaping the value of the GREEN (G) frequency from 0 to 255
-  // You must replace with your own values. Here's an example: 
-  // greenColor = map(greenFrequency, 100, 199, 255, 0);
-  greenColor = map(greenFrequency, XX, XX, 255, 0);
-  
-  Serial.print(" G = ");
-  Serial.print(greenColor);
-  delay(100);
- 
-  // Setting BLUE (B) filtered photodiodes to be read
-  digitalWrite(S2,LOW);
-  digitalWrite(S3,HIGH);
-  
-  // Reading the output frequency
-  blueFrequency = pulseIn(sensorOut, LOW);
-  // Remaping the value of the BLUE (B) frequency from 0 to 255
-  // You must replace with your own values. Here's an example: 
-  // blueColor = map(blueFrequency, 38, 84, 255, 0);
-  blueColor = map(blueFrequency, XX, XX, 255, 0);
+    // Monitor the process until stop at blue color shows up
+    monitorBlueColor()
 
-  // Checks the blue color appearance
-  if(blueColor > redColor && blueColor > greenColor){
-    exitProcess()
+    // TODO keep printing constantly data to python catches it
   }
 }
 
@@ -90,8 +56,36 @@ void turnHotPlateRelay(status) {
 void exitProcess() {
   turnHotPlateRelay("stop");
   while (true){
-    if (... == "start") {
+    if (Serial.readString() == "start") {
       break
     }
   }
+}
+
+void monitorBlueColor() {
+  // RED (R) filtered photodiodes
+    digitalWrite(S2,LOW);
+    digitalWrite(S3,LOW);
+    
+    redFrequency = pulseIn(sensorOut, LOW);
+    redColor = map(redFrequency, 70, 120, 255, 0);
+    
+    // GREEN (G) filtered photodiodes
+    digitalWrite(S2,HIGH);
+    digitalWrite(S3,HIGH);
+    
+    greenFrequency = pulseIn(sensorOut, LOW);
+    greenColor = map(greenFrequency, 100, 199, 255, 0);
+  
+    // BLUE (B) filtered photodiodes
+    digitalWrite(S2,LOW);
+    digitalWrite(S3,HIGH);
+    
+    blueFrequency = pulseIn(sensorOut, LOW);
+    blueColor = map(blueFrequency, 38, 84, 255, 0);
+
+    // Checks the blue color appearance
+    if(blueColor > redColor && blueColor > greenColor){
+      exitProcess()
+    }
 }
