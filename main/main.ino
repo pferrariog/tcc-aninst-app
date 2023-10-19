@@ -34,15 +34,18 @@ void setup() {
 
 void loop() {
   // Check serial available for read commands
-  if (Serial.available() > 0) {
+  if (Serial.available() > 0 && Serial.readString() == "start") {
     // Turning on hot plate
     turnHotPlateRelay("start");
+  }
 
-    // Monitor the process until stop at blue color shows up
-    monitorBlueColor()
-
+  // Monitor the process until stop at blue color shows up
+  while (!monitorBlueColor())
+  {
     // TODO keep printing constantly data to python catches it
   }
+  
+  exitProcess()
 }
 
 void turnHotPlateRelay(status) {
@@ -86,6 +89,8 @@ void monitorBlueColor() {
 
     // Checks the blue color appearance
     if(blueColor > redColor && blueColor > greenColor){
-      exitProcess()
+      return true
     }
+
+    return false
 }
