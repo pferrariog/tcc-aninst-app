@@ -71,6 +71,7 @@ class App:
         # self.data_thread.join()
 
     def stop(self):
+        self.serial_port.write(b'stop')
         self.running = False
         self.start_button.configure(text="Start")
         self.status_text.set("Parado")
@@ -107,15 +108,7 @@ class App:
 
     def start_arduino_process(self):
         try:
-            self.serial_port.write(b'cmd')
-
-            self.running = True
-            self.start_button.configure(text="Stop")
-            self.status_text.set("Executando")
-
-            # thread para simular a leitura de dados do Arduino e atualizar o gráfico
-            self.data_thread = Thread(target=self.read_data)
-            self.data_thread.start()
+            self.serial_port.write(b'start')
         except Exception as e:
             messagebox.showerror("Erro", f"Erro ao iniciar o processo do Arduino: {str(e)}")
 

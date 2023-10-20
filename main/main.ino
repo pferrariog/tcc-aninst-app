@@ -36,19 +36,25 @@ void loop() {
   // Check serial available for read commands
   if (Serial.available() > 0 && Serial.readString() == "start") {
     // Turning on hot plate
-    turnHotPlateRelay("start");
+    char status[] = "start";
+    turnHotPlateRelay(status);
   }
 
   // Monitor the process until stop at blue color shows up
   while (!monitorBlueColor())
   {
-    // TODO keep printing constantly data to python catches it
+    // keep printing constantly data to python catches it
+
+    // in the case the process needs to be stopped before the end
+    if (Serial.readString() == "stop") {
+      exitProcess();
+    }
   }
   
-  exitProcess()
+  exitProcess();
 }
 
-void turnHotPlateRelay(status) {
+void turnHotPlateRelay(char status) {
   if (status == "start") {
     digitalWrite(HOT_PLATE_RELAY_PIN, HIGH);
   } else {
@@ -60,12 +66,12 @@ void exitProcess() {
   turnHotPlateRelay("stop");
   while (true){
     if (Serial.readString() == "start") {
-      break
+      break;
     }
   }
 }
 
-void monitorBlueColor() {
+bool monitorBlueColor() {
   // RED (R) filtered photodiodes
     digitalWrite(S2,LOW);
     digitalWrite(S3,LOW);
@@ -85,12 +91,12 @@ void monitorBlueColor() {
     digitalWrite(S3,HIGH);
     
     blueFrequency = pulseIn(sensorOut, LOW);
-    blueColor = map(blueFrequency, 38, 84, 255, 0);
+    blueColor = map(blueFrequency, 38, 84, 255, 0);  // this values can be changed
 
     // Checks the blue color appearance
     if(blueColor > redColor && blueColor > greenColor){
-      return true
+      return true;
     }
 
-    return false
+    return false;
 }
