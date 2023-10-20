@@ -100,3 +100,6 @@ bool monitorBlueColor() {
 
     return false;
 }
+
+// TODO control OpAmp
+// TODO send data to python

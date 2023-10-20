@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from threading import Thread
 from serial import Serial
+from time import time
 
 class App:
     def __init__(self, root):
@@ -17,11 +18,15 @@ class App:
 
         self.time_value = tk.StringVar()
         self.potential_value = tk.StringVar()
+        self.result_value = tk.StringVar()
         self.status_text = tk.StringVar()
         self.status_text.set("Parado")
 
         self.create_main_frame()
         self.create_graph()
+
+        # self.update_graph()
+        self.calculate_result()
 
     def create_main_frame(self):
         main_frame = ttk.Frame(self.root)
@@ -32,23 +37,28 @@ class App:
 
         config_button = ttk.Button(main_frame, text="Configuração", command=self.open_config)
         config_button.grid(row=1, column=0, pady=10)
-
+        
         status_label = ttk.Label(main_frame, text="Status:")
         status_label.grid(row=3, column=0)
 
         self.status_display = ttk.Label(main_frame, textvariable=self.status_text)
         self.status_display.grid(row=4, column=0)
 
-        stop_button = ttk.Button(main_frame, text="Stop", command=self.stop)
-        stop_button.grid(row=2, column=0, pady=10)
+        self.result_frame.grid(row=1, column=1, padx=10, pady=10, sticky="ns")  # Coluna 1 para o frame de resultado
+        self.result_frame.columnconfigure(0, weight=1)  # Redimensionar a coluna para ocupar todo o espaço disponível
+
+        self.result_label = ttk.Label(self.result_frame, text="Resultado:")
+        self.result_label.grid(row=1, column=0, pady=5, sticky="w")
+
+        self.result_value_label = ttk.Label(self.result_frame, textvariable=self.result_value)
+        self.result_value_label.grid(row=1, column=1, pady=5, sticky="w")
+
 
     def create_graph(self):
         self.figure, self.ax = plt.subplots()
         self.canvas = FigureCanvasTkAgg(self.figure, master=self.root)
         self.canvas_widget = self.canvas.get_tk_widget()
         self.canvas_widget.grid(row=0, column=3, padx=10, pady=10)
-
-        # data update here
 
     def toggle_start(self):
         if self.running:
@@ -57,9 +67,6 @@ class App:
             self.start()
 
     def start(self):
-        if not self.arduino_connected:
-            messagebox.showerror("Erro", "Arduino não está conectado")
-            return
         self.connect_to_arduino("COM")
         self.start_arduino_process()
         self.running = True
@@ -87,14 +94,13 @@ class App:
         ttk.Label(config_frame, text="Potencial:").grid(row=1, column=0, padx=10, pady=5)
         self.potential_entry = ttk.Entry(config_frame, textvariable=self.potential_value)
         self.potential_entry.grid(row=1, column=1, padx=10, pady=5)
-
         ttk.Label(config_frame, text="volts").grid(row=1, column=2, padx=5, pady=5)
 
     def update_time(self, value):
         self.time_value.set(value)
 
     def read_data(self):
-        # read ports A0 and A1 to get DDP and CONVERT TO CURRENT AND UPDATE GRAPH
+        # read ports A0 and A1 to get DDP and CONVERT TO CURRENT
         ...
 
     def connect_to_arduino(self, port):
@@ -109,8 +115,18 @@ class App:
     def start_arduino_process(self):
         try:
             self.serial_port.write(b'start')
+            self.start_time = time()
         except Exception as e:
             messagebox.showerror("Erro", f"Erro ao iniciar o processo do Arduino: {str(e)}")
+
+    def calculate_result(self):
+        """Calculate the analysis final result"""
+        default_current = 0.01
+        total_time = time() - self.start_time
+        q_carga = default_current * total_time
+        mols = q_carga / (... * 96485)  # eletrons envolved
+        mass = mols * ...  # molar mass
+        self.result_value.set(mass)
 
 
 def main():
@@ -121,3 +137,8 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+# TODO save config values
+# TODO add to configuration the MM, mols used
+# TODO read data from arduino properly
+# TODO update graph with arduino data
