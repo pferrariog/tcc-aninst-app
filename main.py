@@ -15,6 +15,7 @@ class App:
         self.serial_port = None
         self.arduino_connected = False
         self.running = False
+        self.start_time = 0
 
         self.time_value = tk.StringVar()
         self.potential_value = tk.StringVar()
@@ -24,8 +25,6 @@ class App:
 
         self.create_main_frame()
         self.create_graph()
-
-        # self.update_graph()
         self.calculate_result()
 
     def create_main_frame(self):
@@ -44,6 +43,7 @@ class App:
         self.status_display = ttk.Label(main_frame, textvariable=self.status_text)
         self.status_display.grid(row=4, column=0)
 
+        self.result_frame = ttk.Frame(self.root)
         self.result_frame.grid(row=1, column=1, padx=10, pady=10, sticky="ns")  # Coluna 1 para o frame de resultado
         self.result_frame.columnconfigure(0, weight=1)  # Redimensionar a coluna para ocupar todo o espaço disponível
 
@@ -67,7 +67,8 @@ class App:
             self.start()
 
     def start(self):
-        self.connect_to_arduino("COM")
+        if not self.running:
+            self.connect_to_arduino("COM6")
         self.start_arduino_process()
         self.running = True
         self.start_button.configure(text="Stop")
@@ -78,7 +79,7 @@ class App:
         # self.data_thread.join()
 
     def stop(self):
-        self.serial_port.write(b'stop')
+        self.serial_port.write('stop'.encode())
         self.running = False
         self.start_button.configure(text="Start")
         self.status_text.set("Parado")
@@ -101,7 +102,9 @@ class App:
 
     def read_data(self):
         # read ports A0 and A1 to get DDP and CONVERT TO CURRENT
-        ...
+        while self.serial_port.is_open:
+            current_value = self.serial_port.readline()
+            # update graph
 
     def connect_to_arduino(self, port):
         try:
@@ -114,7 +117,7 @@ class App:
 
     def start_arduino_process(self):
         try:
-            self.serial_port.write(b'start')
+            self.serial_port.write('start'.encode())
             self.start_time = time()
         except Exception as e:
             messagebox.showerror("Erro", f"Erro ao iniciar o processo do Arduino: {str(e)}")
@@ -124,8 +127,8 @@ class App:
         default_current = 0.01
         total_time = time() - self.start_time
         q_carga = default_current * total_time
-        mols = q_carga / (... * 96485)  # eletrons envolved
-        mass = mols * ...  # molar mass
+        mols = q_carga / (1 * 96485)  # eletrons envolved
+        mass = mols * 1  # molar mass
         self.result_value.set(mass)
 
 
