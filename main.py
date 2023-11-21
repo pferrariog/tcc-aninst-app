@@ -33,11 +33,11 @@ class App:
 
         self.create_main_frame()
         self.create_graph()
-        # self.calculate_result()
+        # self.calculate_result() # won't be calculated here
 
     def create_main_frame(self):
         main_frame = ttk.Frame(self.root)
-        main_frame.grid(row=0, column=0, padx=10, pady=10, sticky="ns")
+        main_frame.grid(row=0, column=0, padx=10, pady=10, sticky='ns')
 
         self.start_button = ttk.Button(main_frame, text="Start", command=self.toggle_start)
         self.start_button.grid(row=0, column=0, pady=10)
@@ -52,8 +52,7 @@ class App:
         self.status_display.grid(row=4, column=0)
 
         self.result_frame = ttk.Frame(self.root)
-        self.result_frame.grid(row=1, column=1, padx=10, pady=10, sticky="ns")  # Coluna 1 para o frame de resultado
-        self.result_frame.columnconfigure(0, weight=1)  # Redimensionar a coluna para ocupar todo o espaço disponível
+        self.result_frame.grid(row=1, column=1, padx=10, pady=10, sticky="nw")
 
         self.result_label = ttk.Label(self.result_frame, text="Resultado:")
         self.result_label.grid(row=1, column=0, pady=5, sticky="w")
@@ -75,7 +74,7 @@ class App:
 
     def start(self):
         if not self.running:
-            self.connect_to_arduino(self.serial_port)
+            self.connect_to_arduino()
         self.start_arduino_process()
         self.running = True
         self.start_button.configure(text="Stop")
@@ -93,15 +92,21 @@ class App:
     def open_config(self):
         config_window = Toplevel(self.root)
         config_window.title("Configuração")
-        config_window.geometry("310x50")
+        config_window.geometry("310x100")
 
-        config_frame = ttk.Frame(config_window, padding=3)
-        config_frame.pack(fill=BOTH, expand=True)
+        potential_frame = ttk.Frame(config_window, padding=3)
+        potential_frame.pack(fill=BOTH, expand=True)
 
-        ttk.Label(config_frame, text="Potencial:").grid(row=1, column=0, padx=10, pady=5)
-        self.potential_entry = ttk.Entry(config_frame, textvariable=self.potential_value)
+        serial_port_frame = ttk.Frame(config_window, padding=3)
+        serial_port_frame.pack(fill=BOTH, expand=True)
+
+        ttk.Label(potential_frame, text="Potencial:").grid(row=1, column=0, padx=10, pady=5)
+        self.potential_entry = ttk.Entry(potential_frame, textvariable=self.potential_value)
         self.potential_entry.grid(row=1, column=1, padx=10, pady=5)
-        ttk.Label(config_frame, text="volts").grid(row=1, column=2, padx=5, pady=5)
+
+        ttk.Label(serial_port_frame, text="Porta COM:").grid(row=1, column=0, padx=5, pady=5)
+        self.serial_port_entry = ttk.Entry(serial_port_frame, textvariable=self.serial_port)
+        self.serial_port_entry.grid(row=1, column=1, padx=10, pady=5)
 
     def update_time(self, value):
         self.time_value.set(value)
@@ -113,7 +118,8 @@ class App:
 
     def connect_to_arduino(self):
         try:
-            self.serial = Serial(self.serial_port, baudrate=9600)
+            self.serial = Serial(self.serial_port.get(), baudrate=9600)
+            print(self.serial_port.get())
             self.arduino_connected = True
             messagebox.showinfo("Conectado", "Conectado ao Arduino")
         except Exception as e:
@@ -129,11 +135,10 @@ class App:
 
     def calculate_result(self):
         """Calculate the analysis final result"""
-        default_current = 0.01
         total_time = time() - self.start_time
-        q_carga = default_current * total_time
-        mols = q_carga / (1 * 96485)  # eletrons envolved
-        mass = mols * 1  # molar mass
+        q_carga = ... * total_time
+        mols = q_carga / (2 * 96485)  # eletrons envolved
+        mass = mols * 176.12  # molar mass
         self.result_value.set(str(mass)[:8])
 
 
@@ -146,5 +151,4 @@ def main():
 if __name__ == "__main__":
     main()
 
-# TODO save config values
-# TODO add to configuration the MM, mols used
+# TODO understand the circuit to measure the current

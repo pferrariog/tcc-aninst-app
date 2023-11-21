@@ -1,15 +1,26 @@
-const int HOT_PLATE_RELAY_PIN = 3;
-const int PWM_PIN = 9;
-const int CIRCUIT_PIN_0 = A0;
-const int CIRCUIT_PIN_1 = A1;
+const int RELAY_PIN = 3;
+const int COUNTER_PIN = 9;
+const int REF_PIN = A0;
+const int WORK_PIN = A1;
+
+// set the voltage range for the reference electrode
+const float REF_RANGE = 1.23;
+
+// set the voltage range for the working electrode
+const float WORK_RANGE = 1.23;
 
 bool break_condition = false;
 String status = "";
 
 
 void setup() {
-  pinMode(HOT_PLATE_RELAY_PIN, OUTPUT);
-  pinMode(PWM_PIN, OUTPUT);
+  TCCR1B = B00000001; // reset the frequency for Pin 9 of the Arduino board to 31 kHz.
+
+  pinMode(RELAY_PIN, OUTPUT);
+  pinMode(COUNTER_PIN, OUTPUT);
+  pinMode(REF_PIN, OUTPUT);
+  pinMode(WORK_PIN, OUTPUT);
+
   Serial.begin(9600);  
 }
 
@@ -20,11 +31,24 @@ void loop() {
     
     if (status == "s") {
       break_condition = false;
-      digitalWrite(10, HIGH); // EXAMPLE 
       turnHotPlateRelay(status);
+
+      // reset counter eletrode
+      digitalWrite(COUNTER_PIN, 0);
+      delay(100);
+      digitalWrite(COUNTER_PIN, 255)
+      delay(100);
+
       while (!monitorBlueColor()) {
-        
-        Serial.write(analogRead(CIRCUIT_PIN_0)); // EXAMPLE
+        int working_voltage = analogRead(WORK_PIN);
+        float working_voltage_value = (float) working_voltage * WORK_RANGE / 1023.0;
+
+        int current = analogRead(A0);
+        float current_value = (float) current * REF_RANGE / 1023.0;
+
+        Serial.write(current_value);
+
+        delay(100);
 
         if (Serial.available() > 0 && status != "s") {
           break_condition = true;
@@ -50,7 +74,7 @@ void turnHotPlateRelay(String status) {
 
 void exitProcess() {
   turnHotPlateRelay("p");
-  // stop other circuit elements
+  digitalWrite(COUNTER_PIN, 0);
 }
 
 bool monitorBlueColor() {
