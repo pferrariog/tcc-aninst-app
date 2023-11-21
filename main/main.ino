@@ -78,5 +78,30 @@ void exitProcess() {
 }
 
 bool monitorBlueColor() {
+// RED (R) filtered photodiodes
+  digitalWrite(S2,LOW);
+  digitalWrite(S3,LOW);
+  
+  redFrequency = pulseIn(sensorOut, LOW);
+  redColor = map(redFrequency, 70, 120, 255, 0);
+  
+  // GREEN (G) filtered photodiodes
+  digitalWrite(S2,HIGH);
+  digitalWrite(S3,HIGH);
+  
+  greenFrequency = pulseIn(sensorOut, LOW);
+  greenColor = map(greenFrequency, 100, 199, 255, 0);
+
+  // BLUE (B) filtered photodiodes
+  digitalWrite(S2,LOW);
+  digitalWrite(S3,HIGH);
+  
+  blueFrequency = pulseIn(sensorOut, LOW);
+  blueColor = map(blueFrequency, 38, 84, 255, 0);
+
+  // Checks the blue color appearance
+  if(blueColor > redColor && blueColor > greenColor){
+    return true;
+  }
   return false;
 }
