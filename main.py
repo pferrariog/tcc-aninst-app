@@ -1,4 +1,8 @@
+from csv import DictWriter
+from time import sleep
 from time import time
+
+from os import makedirs
 
 from tkinter import BOTH
 from tkinter import messagebox
@@ -10,6 +14,7 @@ from matplotlib.pyplot import subplots
 from matplotlib.animation import FuncAnimation
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from serial import Serial
+from serial.tools import list_ports
 
 
 class App:
@@ -18,7 +23,7 @@ class App:
         self.root.title("Potentiostato Reader")
 
         self.serial = None
-        self.serial_port = None
+        self.serial_port = self.get_arduino_port()
         self.data_list = []
         self.arduino_connected = False
         self.running = False
@@ -33,7 +38,7 @@ class App:
 
         self.create_main_frame()
         self.create_graph()
-        # self.calculate_result() # won't be calculated here
+        # self.calculate_result()
 
     def create_main_frame(self):
         main_frame = ttk.Frame(self.root)
@@ -104,27 +109,26 @@ class App:
         self.potential_entry = ttk.Entry(potential_frame, textvariable=self.potential_value)
         self.potential_entry.grid(row=1, column=1, padx=10, pady=5)
 
-        ttk.Label(serial_port_frame, text="Porta COM:").grid(row=1, column=0, padx=5, pady=5)
-        self.serial_port_entry = ttk.Entry(serial_port_frame, textvariable=self.serial_port)
-        self.serial_port_entry.grid(row=1, column=1, padx=10, pady=5)
-
     def update_time(self, value):
         self.time_value.set(value)
 
     def get_data(self):
         self.data_list.append(self.serial.readline().decode('ascii'))
         self.ax.clear()
-        self.ax.plot(self.data_list)        
+        self.ax.plot(self.data_list)
+
+        self.ax.set_title("Amperograma")
+        self.ax.set_ylabel("Corrente (mA)")
+        self.ax.set_xlabel("Tempo (s)")
 
     def connect_to_arduino(self):
         try:
-            self.serial = Serial(self.serial_port.get(), baudrate=9600)
-            print(self.serial_port.get())
+            self.serial = Serial(self.serial_port.get(), baudrate=9600, timeout=1)
+            sleep(2)
             self.arduino_connected = True
             messagebox.showinfo("Conectado", "Conectado ao Arduino")
         except Exception as e:
             messagebox.showerror("Erro", f"Erro ao conectar ao Arduino: {str(e)}")
-            self.arduino_connected = False
 
     def start_arduino_process(self):
         try:
@@ -141,6 +145,22 @@ class App:
         mass = mols * 176.12  # molar mass
         self.result_value.set(str(mass)[:8])
 
+    def get_arduino_port(self) -> str | None:
+        arduino_port = [str(port) for port in list_ports.comports() if "CH340" in str(port)]
+        if arduino_port:
+            # pattern -> com3 - arduino uno -> com3
+            return arduino_port[0].split(' ')[0]
+        else:
+            messagebox.showerror("Não foi possível conectar com o arduino - Porta não encontrada.")
+
+
+    def print_output_file(self) -> None:
+        """Print the process data into a csv file"""
+        makedirs('output')
+        with open(f'output/data_file{...}', 'w+') as file:
+            writer = DictWriter(file)
+            for row in self.data_list:
+                writer.writerow(...)
 
 def main():
     root = Tk()
@@ -151,4 +171,4 @@ def main():
 if __name__ == "__main__":
     main()
 
-# TODO understand the circuit to measure the current
+# TODO receive arduino finishing input

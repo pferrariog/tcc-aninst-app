@@ -43,10 +43,10 @@ void loop() {
         int working_voltage = analogRead(WORK_PIN);
         float working_voltage_value = (float) working_voltage * WORK_RANGE / 1023.0;
 
-        int current = analogRead(A0);
+        int current = analogRead(REF_PIN);
         float current_value = (float) current * REF_RANGE / 1023.0;
 
-        Serial.write(current_value);
+        Serial.print(current_value);
 
         delay(100);
 
@@ -75,6 +75,7 @@ void turnHotPlateRelay(String status) {
 void exitProcess() {
   turnHotPlateRelay("p");
   digitalWrite(COUNTER_PIN, 0);
+  // send final signal to python!
 }
 
 bool monitorBlueColor() {
