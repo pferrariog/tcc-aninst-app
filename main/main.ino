@@ -3,10 +3,10 @@ const int COUNTER_PIN = 9;
 const int REF_PIN = A0;
 const int WORK_PIN = A1;
 
-// set the voltage range for the reference electrode
+// voltage range for the reference electrode
 const float REF_RANGE = 1.23;
 
-// set the voltage range for the working electrode
+// voltage range for the working electrode
 const float WORK_RANGE = 1.23;
 
 bool break_condition = false;
@@ -21,14 +21,14 @@ void setup() {
   pinMode(REF_PIN, OUTPUT);
   pinMode(WORK_PIN, OUTPUT);
 
-  Serial.begin(9600);  
+  Serial.begin(9600);
 }
 
 void loop() {
   if (Serial.available() > 0) {
     status = Serial.readStringUntil('\n');
     status.trim();
-    
+
     if (status == "s") {
       break_condition = false;
       turnHotPlateRelay(status);
@@ -75,28 +75,28 @@ void turnHotPlateRelay(String status) {
 void exitProcess() {
   turnHotPlateRelay("p");
   digitalWrite(COUNTER_PIN, 0);
-  // send final signal to python!
+  Serial.print("end");
 }
 
 bool monitorBlueColor() {
 // RED (R) filtered photodiodes
   digitalWrite(S2,LOW);
   digitalWrite(S3,LOW);
-  
+
   redFrequency = pulseIn(sensorOut, LOW);
   redColor = map(redFrequency, 70, 120, 255, 0);
-  
+
   // GREEN (G) filtered photodiodes
   digitalWrite(S2,HIGH);
   digitalWrite(S3,HIGH);
-  
+
   greenFrequency = pulseIn(sensorOut, LOW);
   greenColor = map(greenFrequency, 100, 199, 255, 0);
 
   // BLUE (B) filtered photodiodes
   digitalWrite(S2,LOW);
   digitalWrite(S3,HIGH);
-  
+
   blueFrequency = pulseIn(sensorOut, LOW);
   blueColor = map(blueFrequency, 38, 84, 255, 0);
 

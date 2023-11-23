@@ -1,0 +1,104 @@
+[tool.poetry]
+name = "tcc-aninst"
+version = "0.1.0"
+description = "low cost potentiostat prototype"
+authors = ["Pedro Ferrari <pdrferrari08@gmail.com>"]
+readme = "README.md"
+packages = [{include = "tcc_aninst"}]
+
+[tool.poetry.dependencies]
+python = "^3.11"
+matplotlib = "^3.8.2"
+pyserial = "^3.5"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+
+[tool.poetry.dev-dependencies]
+flake8 = "^6.1.0"
+black = "^23.9.1"
+pre-commit = "^3.4.0"
+commitizen = "^3.10.0"
+pyaml = "^23.9.7"
+safety = "^2.3.5"
+isort = "^5.12.0"
+bandit = "^1.7.5"
+pytest = "^7.4.2"
+flake8-bugbear = "^23.9.16"
+flake8-docstrings = "^1.7.0"
+pyproject-flake8 = "^6.1.0"
+
+[tool.black]
+line-length = 119
+targer-version = ['py310']
+include = '\.pyi?$'
+extend-exclude = '''
+/(
+    \.eggs
+  | \.git
+  | \.venv
+  | \.env
+  | cdk.out
+  | \.vscode
+  | build
+  | dist
+  | \.mypy_cache
+  | \.idea
+)\
+'''
+
+[tool.isort]
+profile = 'black'
+force_single_line = true
+combine_as_imports = true
+lines_between_types = 1
+lines_after_imports = 2
+src_paths = ["project", "tests", "Snippets"]
+line_length = 119
+
+[tool.flake8]
+max-line-length = 119
+select = [
+  "C",
+  "E",
+  "W",
+  "F",
+  "N",
+  "B",
+  "T",
+  "D",
+  "B950",
+]
+ignore = [
+  "E203",
+  "E501",
+  "D202",
+  "D400",
+  "D100",
+  "D104",
+  "ANN003",
+  "ANN002",
+  "ANN1",
+  "B008"
+]
+per-file-ignores = [
+  "tests/*:ANN,D"
+]
+exclude = [
+  ".venv/*",
+  ".idea/*",
+  ".vscode/*"
+]
+
+[tool.bandit]
+skips = [
+  "B101",
+  "B113",
+  "B311"
+]
+exclude_dirs = [
+  ".venv"
+]
