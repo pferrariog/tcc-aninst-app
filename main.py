@@ -26,7 +26,6 @@ class App:
         self.root.title("Potentiostato Reader")
 
         self.serial = None
-        self.serial_port = self.get_arduino_port()
         self.arduino_connected = False
         self.running = False
         self.start_time = 0
@@ -36,7 +35,6 @@ class App:
         self.potential_value = StringVar()
         self.result_value = StringVar()
         self.status_text = StringVar()
-
         self.status_text.set("Parado")
 
         self.create_main_frame()
@@ -48,8 +46,8 @@ class App:
         main_frame.grid(row=0, column=0, padx=10, pady=10, sticky="ns")
 
         # Main layout
-        start_button = ttk.Button(main_frame, text="Start", command=self.toggle_start)
-        start_button.grid(row=0, column=0, pady=10)
+        self.start_button = ttk.Button(main_frame, text="Start", command=self.toggle_start)
+        self.start_button.grid(row=0, column=0, pady=10)
         config_button = ttk.Button(main_frame, text="Configuração", command=self.open_config)
         config_button.grid(row=1, column=0, pady=10)
 
@@ -83,8 +81,15 @@ class App:
 
     def start(self) -> None:
         """Start the realtime animation graph"""
-        if not self.running:
+        if self.running:
+            messagebox.showwarning("Aviso", "Processo já está em execução!")
+            return
+        try:
             self.connect_to_arduino()
+        except Exception as e:
+            messagebox.showerror("Erro", f"Erro ao conectar ao Arduino: {str(e)}")
+            return
+        messagebox.showinfo("Conectado", "Conectado ao Arduino")
         self.start_arduino_process()
         self.running = True
         self.start_button.configure(text="Stop")
@@ -132,13 +137,9 @@ class App:
 
     def connect_to_arduino(self) -> None:
         """Connect to the arduino"""
-        try:
-            self.serial = Serial(self.serial_port.get(), baudrate=9600, timeout=1)
-            sleep(2)
-            self.arduino_connected = True
-            messagebox.showinfo("Conectado", "Conectado ao Arduino")
-        except Exception as e:
-            messagebox.showerror("Erro", f"Erro ao conectar ao Arduino: {str(e)}")
+        self.serial = Serial(self.get_arduino_port(), baudrate=9600, timeout=1)
+        sleep(2)
+        self.arduino_connected = True
 
     def start_arduino_process(self) -> None:
         """Start the reading process by sending a byte char"""
