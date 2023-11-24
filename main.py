@@ -59,11 +59,11 @@ class App:
 
         # Result
         result_frame = ttk.Frame(self.root)
-        result_frame.grid(row=1, column=1, padx=10, pady=10, sticky="nw")
+        result_frame.grid(row=1, column=0, padx=10, pady=10, sticky="nw")
         result_label = ttk.Label(result_frame, text="Resultado:")
-        result_label.grid(row=1, column=0, pady=5, sticky="w")
+        result_label.grid(row=1, column=0, pady=10)
         result_value_label = ttk.Label(result_frame, textvariable=self.result_value)
-        result_value_label.grid(row=1, column=1, pady=5, sticky="w")
+        result_value_label.grid(row=1, column=1, pady=10)
 
     def create_graph(self) -> None:
         """Create graph placeholder"""
@@ -112,7 +112,7 @@ class App:
         """Create configuration screen"""
         config_window = Toplevel(self.root)
         config_window.title("Configuração")
-        config_window.geometry("310x100")
+        config_window.geometry("310x50")
 
         potential_frame = ttk.Frame(config_window, padding=3)
         potential_frame.pack(fill=BOTH, expand=True)
@@ -123,11 +123,14 @@ class App:
 
     def get_data(self) -> None:
         """Plot realtime data sended by arduino"""
+        if self.serial.in_waiting() == 0:
+            self.stop()
+            return
         current_value = self.serial.readline().decode("ascii")
-        current_time = time() - self.start_time
         if "end" in current_value:
             self.stop()
             return
+        current_time = time() - self.start_time
         self.data_list.append((current_value, current_time))
         self.ax.clear()
         self.ax.plot(zip(*self.data_list))
@@ -137,7 +140,10 @@ class App:
 
     def connect_to_arduino(self) -> None:
         """Connect to the arduino"""
-        self.serial = Serial(self.get_arduino_port(), baudrate=9600, timeout=1)
+        arduino_port = self.get_arduino_port()
+        if not arduino_port:
+            raise Exception
+        self.serial = Serial(arduino_port, baudrate=9600, timeout=1)
         sleep(2)
         self.arduino_connected = True
 
@@ -164,7 +170,7 @@ class App:
             # pattern -> com3 - arduino uno -> com3
             return arduino_port[0].split(" ")[0]
         else:
-            messagebox.showerror("Não foi possível conectar com o arduino - Porta não encontrada.")
+            messagebox.showerror("Erro", "Não foi possível conectar com o arduino - Porta não encontrada.")
 
     def print_output_file(self) -> None:
         """Print the process data into a csv file"""

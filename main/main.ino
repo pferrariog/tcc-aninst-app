@@ -9,6 +9,23 @@ const float REF_RANGE = 1.23;
 // voltage range for the working electrode
 const float WORK_RANGE = 1.23;
 
+// TCS230 or TCS3200 pins wiring to Arduino
+#define S0 4
+#define S1 5
+#define S2 6
+#define S3 7
+#define sensorOut 8
+
+// Stores frequency read by the photodiodes
+int redFrequency = 0;
+int greenFrequency = 0;
+int blueFrequency = 0;
+
+// Stores the red. green and blue colors
+int redColor = 0;
+int greenColor = 0;
+int blueColor = 0;
+
 bool break_condition = false;
 String status = "";
 
@@ -36,7 +53,7 @@ void loop() {
       // reset counter eletrode
       digitalWrite(COUNTER_PIN, 0);
       delay(100);
-      digitalWrite(COUNTER_PIN, 255)
+      digitalWrite(COUNTER_PIN, 255);
       delay(100);
 
       while (!monitorBlueColor()) {
@@ -65,10 +82,10 @@ void loop() {
 
 void turnHotPlateRelay(String status) {
   if (status == "s") {
-    digitalWrite(HOT_PLATE_RELAY_PIN, HIGH);
+    digitalWrite(RELAY_PIN, HIGH);
   }
   else {
-    digitalWrite(HOT_PLATE_RELAY_PIN, LOW);
+    digitalWrite(RELAY_PIN, LOW);
   }
 }
 
