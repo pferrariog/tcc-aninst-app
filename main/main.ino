@@ -3,12 +3,6 @@ const int COUNTER_PIN = 9;
 const int REF_PIN = A0;
 const int WORK_PIN = A1;
 
-// voltage range for the reference electrode
-const float REF_RANGE = 1.23;
-
-// voltage range for the working electrode
-const float WORK_RANGE = 1.23;
-
 // TCS230 or TCS3200 pins wiring to Arduino
 #define S0 4
 #define S1 5
@@ -28,17 +22,17 @@ int blueColor = 0;
 
 bool break_condition = false;
 String status = "";
+float potential = 0.6;
 
 
 void setup() {
   TCCR1B = B00000001; // reset the frequency for Pin 9 of the Arduino board to 31 kHz.
+  Serial.begin(9600);
 
   pinMode(RELAY_PIN, OUTPUT);
   pinMode(COUNTER_PIN, OUTPUT);
   pinMode(REF_PIN, OUTPUT);
   pinMode(WORK_PIN, OUTPUT);
-
-  Serial.begin(9600);
 }
 
 void loop() {
@@ -58,13 +52,12 @@ void loop() {
 
       while (!monitorBlueColor()) {
         int working_voltage = analogRead(WORK_PIN);
-        float working_voltage_value = (float) working_voltage * WORK_RANGE / 1023.0;
+        float working_voltage_value = (float) working_voltage / 1023.0;
 
         int current = analogRead(REF_PIN);
-        float current_value = (float) current * REF_RANGE / 1023.0;
+        float current_value = (float) current / 1023.0;
 
         Serial.print(current_value);
-
         delay(100);
 
         if (Serial.available() > 0 && status != "s") {
@@ -73,6 +66,9 @@ void loop() {
         }
       }
     }
+  }
+  if (status != "s" && status != "p") {
+    potential = (float) status;
   }
   if (break_condition) {
     exitProcess();

@@ -13,6 +13,7 @@ from tkinter import ttk
 from matplotlib.animation import FuncAnimation
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.pyplot import subplots
+from scipy.integrate import quad
 from serial import Serial
 from serial.tools import list_ports
 
@@ -104,15 +105,15 @@ class App:
         self.running = False
         self.start_button.configure(text="Start")
         self.status_text.set("Parado")
-        # self.animation.event_source.stop()
-        # self.print_output_file()
-        # self.calculate_result()
+        self.animation.event_source.stop()
+        self.print_output_file()
+        self.calculate_result()
 
     def open_config(self) -> None:
         """Create configuration screen"""
         config_window = Toplevel(self.root)
         config_window.title("Configuração")
-        config_window.geometry("310x50")
+        config_window.geometry("310x80")
 
         potential_frame = ttk.Frame(config_window, padding=3)
         potential_frame.pack(fill=BOTH, expand=True)
@@ -120,6 +121,18 @@ class App:
         ttk.Label(potential_frame, text="Potencial:").grid(row=1, column=0, padx=10, pady=5)
         self.potential_entry = ttk.Entry(potential_frame, textvariable=self.potential_value)
         self.potential_entry.grid(row=1, column=1, padx=10, pady=5)
+
+        self.save_button = ttk.Button(potential_frame, text="Save", command=self.save_configuration_values)
+        self.save_button.grid(row=2, column=1, padx=10, pady=15)
+
+    def save_configuration_values(self) -> None:
+        """Send config data to Arduino"""
+        try:
+            self.connect_to_arduino()
+        except Exception as e:
+            messagebox.showerror("Erro", f"Erro ao conectar ao Arduino para enviar: {str(e)}")
+        else:
+            self.serial.write(bytes(str(self.potential_entry.get()), "utf-8"))
 
     def get_data(self) -> None:
         """Plot realtime data sended by arduino"""
@@ -138,8 +151,10 @@ class App:
         self.ax.set_ylabel("Corrente (mA)")
         self.ax.set_xlabel("Tempo (s)")
 
-    def connect_to_arduino(self) -> None:
+    def connect_to_arduino(self) -> None | Serial:
         """Connect to the arduino"""
+        if self.serial:
+            return self.serial
         arduino_port = self.get_arduino_port()
         if not arduino_port:
             raise Exception
@@ -155,17 +170,24 @@ class App:
         except Exception as e:
             messagebox.showerror("Erro", f"Erro ao iniciar o processo do Arduino: {str(e)}")
 
-    # def calculate_result(self) -> None:
-    #     """Calculate the analysis final result"""
-    #     total_time = time() - self.start_time
-    #     q_carga = ... * total_time
-    #     mols = q_carga / (2 * 96485)  # eletrons envolved
-    #     mass = mols * 176.12  # molar mass
-    #     self.result_value.set(str(mass)[:8])
+    def calculate_result(self) -> None:
+        """Calculate the analysis final result"""
+        total_time = time() - self.start_time
+        accumulated_q = 0
+        old_time = 0
+
+        for current, measured_time in self.data_list:
+            qx, _ = quad(lambda _, curr=current: curr, old_time, measured_time)
+            accumulated_q += qx
+            old_time = measured_time
+
+        q_carga = accumulated_q * total_time
+        mols = q_carga / (2 * 96485)
+        self.result_value.set(str(mols)[:8] + "mol.L^-1")
 
     def get_arduino_port(self) -> str | None:
         """Get connected arduino's COM port"""
-        arduino_port = [str(port) for port in list_ports.comports() if "CH340" in str(port)]
+        arduino_port = [str(port) for port in list_ports.comports()]
         if arduino_port:
             # pattern -> com3 - arduino uno -> com3
             return arduino_port[0].split(" ")[0]
