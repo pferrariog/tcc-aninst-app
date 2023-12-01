@@ -197,7 +197,7 @@ class App:
     def print_output_file(self) -> None:
         """Print the process data into a csv file"""
         makedirs("output")
-        with open(f'output/data_file{datetime.now().strftime("%Y%m%d%H%M%s")}', "w+") as file:
+        with open(f'output/data_file{datetime.now().strftime("%Y%m%d%H%M%S")}', "w+") as file:
             writer = DictWriter(file)
             writer.writeheader()
             for current, measured_time in self.data_list:

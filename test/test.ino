@@ -62,13 +62,12 @@ void loop() {
 
   // Reading the output frequency
   blueFrequency = pulseIn(sensorOut, LOW);
-  blueColor = map(blueFrequency, 130, 80, 255, 0);
+  // blueColor = map(blueFrequency, 130, 80, 255, 0);
 
   // Printing the BLUE (B) value
   Serial.print(" B = ");
   Serial.println(blueFrequency);
-  Serial.println("Color value: ");
-  Serial.println(blueColor);
+  // Serial.println("Color value: ");
+  // Serial.println(blueColor);
   delay(100);
-
 }
