@@ -121,6 +121,7 @@ class App:
         ttk.Label(potential_frame, text="Potencial:").grid(row=1, column=0, padx=10, pady=5)
         self.potential_entry = ttk.Entry(potential_frame, textvariable=self.potential_value)
         self.potential_entry.grid(row=1, column=1, padx=10, pady=5)
+        self.potential_entry.insert(0, "0.6")
 
         self.save_button = ttk.Button(potential_frame, text="Save", command=self.save_configuration_values)
         self.save_button.grid(row=2, column=1, padx=10, pady=15)
@@ -146,7 +147,7 @@ class App:
         current_time = time() - self.start_time
         self.data_list.append((current_value, current_time))
         self.ax.clear()
-        self.ax.plot(zip(*self.data_list))
+        self.ax.plot(*zip(*self.data_list))
         self.ax.set_title("Amperograma")
         self.ax.set_ylabel("Corrente (mA)")
         self.ax.set_xlabel("Tempo (s)")
