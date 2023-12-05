@@ -1,4 +1,3 @@
-const int RELAY_PIN = 3;
 const int COUNTER_PIN = 9;
 const int REF_PIN = A0;
 const int WORK_PIN = A1;
@@ -22,20 +21,17 @@ int blueColor = 0;
 
 bool break_condition = false;
 String status = "";
-float potential = 96; // 96 de 0 a 1023 == 0.6V
-
-const float R_REF = 68;
-float current_in_mA;
+int potential = 32;
+float desired_potential = 0.6;
 
 
 void setup() {
   TCCR1B = B00000001; // reset the frequency for Pin 9 of the Arduino board to 31 kHz.
   Serial.begin(9600);
 
-  // pinMode(RELAY_PIN, OUTPUT);
   pinMode(COUNTER_PIN, OUTPUT);
-  pinMode(REF_PIN, OUTPUT);
-  pinMode(WORK_PIN, OUTPUT);
+  pinMode(REF_PIN, INPUT);
+  pinMode(WORK_PIN, INPUT);
 }
 
 void loop() {
@@ -45,48 +41,45 @@ void loop() {
 
     if (status == "s") {
       break_condition = false;
-      // turnHotPlateRelay(status);
 
       // reset counter eletrode
-      digitalWrite(COUNTER_PIN, 0);
-      delay(100);
-      digitalWrite(COUNTER_PIN, 255);
-      delay(100);
+      analogWrite(COUNTER_PIN, 0);
 
-      analogWrite(WORK_PIN, potential);
-      delay(1000);
-      analogWrite(WORK_PIN, 0);
+      // lê a corrente de circuito aberto
+      Serial.print("corrent inicio");
+      Serial.println(((analogRead(WORK_PIN) / 1023.0) * 5.0) / 68.0);
 
-      // lê a corrente fluindo pelo eletrodo de trabalho
-      float current_value = (float) analogRead(REF_PIN);
-
-      // calcula a tensão do eletrodo contra-eletrodo para compensar a corrente
-      float counter_voltage = -current_value / R_REF;
-
-      // aplica a tensão do eletrodo contra-eletrodo
-      analogWrite(COUNTER_PIN, counter_voltage);
-
-      current_value = (float) analogRead(REF_PIN);
-      current_in_mA = current_value * (1000 / 1023);
-      Serial.println(current_in_mA); // corrente de início
+      // lê a voltagem de referencia
+      Serial.print("voltagem ref de inicio ");
+      Serial.println(((analogRead(REF_PIN) / 1023.0) * 5.0));
 
       while (!monitorBlueColor()) {
-        analogWrite(WORK_PIN, potential);
-        int current = analogRead(REF_PIN);
-        float current_value = (float) current * (1000 / 1023);
-        Serial.println(current);
-        delay(100);
+        analogWrite(COUNTER_PIN, potential);
+        
+        float work_voltage = (analogRead(WORK_PIN) / 1023.0) * 5.0
+        Serial.print("work - current ");
+        Serial.println(work_voltage / 68.0);
 
-        if (Serial.available() > 0 && status != "s") {
-          break_condition = true;
-          break;
+        float ref_voltage = (analogRead(REF_PIN) / 1023.0) * 5.0
+        Serial.print("ref - voltage ");
+        Serial.println(ref_voltage);
+
+        Serial.print("cell potential");
+        float cell_potential = work_voltage - ref_voltage;
+        Serial.prinln(cell_potential);
+
+        if (cell_potential < desired_potential) {
+          potential += 1;
         }
       }
+      break_condition = true;
     }
   }
-  if (status != "s" && status != "p") {
+  if (status != "" && status != "s" && status != "p") {
     float ref_potential = status.toFloat();
-    potential = map(ref_potential, 0, 5, 0, 1023);
+    potential = mapfloat(ref_potential, 0, 5, 0, 1023);
+    potential = (int) potential;
+    Serial.println(potential);
   }
   if (break_condition) {
     exitProcess();
@@ -94,17 +87,7 @@ void loop() {
   }
 }
 
-void turnHotPlateRelay(String status) {
-  if (status == "s") {
-    digitalWrite(RELAY_PIN, HIGH);
-  }
-  else {
-    digitalWrite(RELAY_PIN, LOW);
-  }
-}
-
 void exitProcess() {
-  turnHotPlateRelay("p");
   digitalWrite(COUNTER_PIN, 0);
   Serial.print("end");
 }
@@ -136,4 +119,8 @@ bool monitorBlueColor() {
     return true;
   }
   return false;
+}
+
+float mapfloat(float x, float in_min, float in_max, float out_min, float out_max) {
+  return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
 }
