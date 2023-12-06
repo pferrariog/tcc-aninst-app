@@ -4,3 +4,4 @@ venv
 .theia
 test.py
 poetry.toml
+output

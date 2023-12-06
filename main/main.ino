@@ -21,13 +21,15 @@ int blueColor = 0;
 
 bool break_condition = false;
 String status = "";
-int potential = 32;
+int potential = 33;
 float desired_potential = 0.6;
 
+float end_time = 150.00;
 
 void setup() {
   TCCR1B = B00000001; // reset the frequency for Pin 9 of the Arduino board to 31 kHz.
   Serial.begin(9600);
+  Serial.flush();
 
   pinMode(COUNTER_PIN, OUTPUT);
   pinMode(REF_PIN, INPUT);
@@ -44,33 +46,35 @@ void loop() {
 
       // reset counter eletrode
       analogWrite(COUNTER_PIN, 0);
+      delay(500);
 
-        // lê a corrente de circuito aberto
-      Serial.print("corrent inicio");
-      float work_voltage_zero = (analogRead(WORK_PIN) / 1023.0) * 5.0;
-      Serial.println((work_voltage_zero / 202000), 6);
+      // lê a corrente de circuito aberto
+      float work_voltage = analogRead(WORK_PIN) * 4.8828; // 5.0/1023.0 * 1000 (mV) - conversion factor
+      Serial.println((work_voltage / 0.202), 6); // shunt resistor value according to reference (0.202 mOhm)
 
-      // lê a voltagem de referenci
-      Serial.print("voltagem de inicio ");
-      float ref_zero = (analogRead(REF_PIN) / 1023.0) * 5.0;
+      // lê a voltagem de referencia
+      float ref_voltage = analogRead(REF_PIN) * 4.8828; // mA
+      Serial.println(ref_voltage, 6);
+
       Serial.println(work_voltage_zero - ref_zero, 6);
       delay(500);
-      
-      while (!monitorBlueColor()) {
+
+      float start_time = millis();
+
+      while (millis() - start_time < 15.00) // wait for cathodic current goes away
+
+      // while (!monitorBlueColor())
+      while (millis() - start_time < end_time) {
         analogWrite(COUNTER_PIN, potential);
-        
-        float work_voltage = (analogRead(WORK_PIN) / 1023.0) * 5.0;
-        Serial.print("work - current ");
-        Serial.println(work_voltage / 68.0, 6);
 
-        float ref_voltage = (analogRead(REF_PIN) / 1023.0) * 5.0;
-        // Serial.print("ref - voltage ");
-        // Serial.println(ref_voltage, 6);
+        work_voltage = analogRead(WORK_PIN) * 4.8828;
+        Serial.println(work_voltage / 0.202, 6); // check if works with 0.202
 
-        Serial.print("cell potential ");
+        ref_voltage = analogRead(REF_PIN) * 4.8828;;
+        Serial.println(ref_voltage, 6);
+
         float cell_potential = work_voltage - ref_voltage;
         Serial.println(cell_potential, 6);
-
         delay(200);
       }
       break_condition = true;

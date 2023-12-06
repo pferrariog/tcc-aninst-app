@@ -10,7 +10,6 @@ from tkinter import Toplevel
 from tkinter import messagebox
 from tkinter import ttk
 
-from matplotlib.animation import FuncAnimation
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.pyplot import subplots
 from scipy.integrate import quad
@@ -72,6 +71,9 @@ class App:
         self.canvas = FigureCanvasTkAgg(self.figure, master=self.root)
         self.canvas_widget = self.canvas.get_tk_widget()
         self.canvas_widget.grid(row=0, column=3, padx=10, pady=10)
+        self.ax.set_ylabel("Corrente (mA)")
+        self.ax.set_xlabel("Tempo (s)")
+        self.ax.set_xlim(0, 150)
 
     def toggle_start(self) -> None:
         """Start/stop button trigger"""
@@ -97,7 +99,7 @@ class App:
         self.status_text.set("Executando")
 
         # realtime update
-        self.animation = FuncAnimation(self.figure, self.get_data, frames=100, fargs=(self), interval=100)
+        self.update_graph()
 
     def stop(self) -> None:
         """Stop the process by sending a byte char"""
@@ -105,7 +107,6 @@ class App:
         self.running = False
         self.start_button.configure(text="Start")
         self.status_text.set("Parado")
-        self.animation.event_source.stop()
         self.print_output_file()
         self.calculate_result()
 
@@ -135,22 +136,20 @@ class App:
         else:
             self.serial.write(bytes(str(self.potential_entry.get()), "utf-8"))
 
-    def get_data(self) -> None:
+    def update_graph(self) -> None:
         """Plot realtime data sended by arduino"""
-        if self.serial.in_waiting() == 0:
-            self.stop()
-            return
-        current_value = self.serial.readline().decode("ascii")
-        if "end" in current_value:
-            self.stop()
-            return
-        current_time = time() - self.start_time
-        self.data_list.append((current_value, current_time))
-        self.ax.clear()
-        self.ax.plot(*zip(*self.data_list))
-        self.ax.set_title("Amperograma")
-        self.ax.set_ylabel("Corrente (mA)")
-        self.ax.set_xlabel("Tempo (s)")
+        while True:
+            current_value = self.serial.readline().decode("ascii")
+            if not current_value:
+                continue
+            if "end" in current_value:
+                self.stop()
+                break
+            current_time = time() - self.start_time
+            self.data_list.append((current_value, current_time))
+            self.ax.clear()
+            self.ax.plot(*zip(*self.data_list))
+            sleep(0.1)
 
     def connect_to_arduino(self) -> None | Serial:
         """Connect to the arduino"""
@@ -188,7 +187,7 @@ class App:
 
     def get_arduino_port(self) -> str | None:
         """Get connected arduino's COM port"""
-        arduino_port = [str(port) for port in list_ports.comports()]
+        arduino_port = [str(port) for port in list_ports.comports() if "CH340" in str(port)]
         if arduino_port:
             # pattern -> com3 - arduino uno -> com3
             return arduino_port[0].split(" ")[0]
@@ -197,9 +196,9 @@ class App:
 
     def print_output_file(self) -> None:
         """Print the process data into a csv file"""
-        makedirs("output")
-        with open(f'output/data_file{datetime.now().strftime("%Y%m%d%H%M%S")}', "w+") as file:
-            writer = DictWriter(file)
+        makedirs("output", exist_ok=True)
+        with open(f'output/{datetime.now().strftime("%Y%m%d%H%M%S")}.csv', "w+") as file:
+            writer = DictWriter(file, fieldnames=["current", "time"])
             writer.writeheader()
             for current, measured_time in self.data_list:
                 writer.writerow({"current": current, "time": measured_time})
