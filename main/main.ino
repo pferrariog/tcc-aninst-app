@@ -45,32 +45,33 @@ void loop() {
       // reset counter eletrode
       analogWrite(COUNTER_PIN, 0);
 
-      // lê a corrente de circuito aberto
+        // lê a corrente de circuito aberto
       Serial.print("corrent inicio");
-      Serial.println(((analogRead(WORK_PIN) / 1023.0) * 5.0) / 68.0);
+      float work_voltage_zero = (analogRead(WORK_PIN) / 1023.0) * 5.0;
+      Serial.println((work_voltage_zero / 202000), 6);
 
-      // lê a voltagem de referencia
-      Serial.print("voltagem ref de inicio ");
-      Serial.println(((analogRead(REF_PIN) / 1023.0) * 5.0));
-
+      // lê a voltagem de referenci
+      Serial.print("voltagem de inicio ");
+      float ref_zero = (analogRead(REF_PIN) / 1023.0) * 5.0;
+      Serial.println(work_voltage_zero - ref_zero, 6);
+      delay(500);
+      
       while (!monitorBlueColor()) {
         analogWrite(COUNTER_PIN, potential);
         
-        float work_voltage = (analogRead(WORK_PIN) / 1023.0) * 5.0
+        float work_voltage = (analogRead(WORK_PIN) / 1023.0) * 5.0;
         Serial.print("work - current ");
-        Serial.println(work_voltage / 68.0);
+        Serial.println(work_voltage / 68.0, 6);
 
-        float ref_voltage = (analogRead(REF_PIN) / 1023.0) * 5.0
-        Serial.print("ref - voltage ");
-        Serial.println(ref_voltage);
+        float ref_voltage = (analogRead(REF_PIN) / 1023.0) * 5.0;
+        // Serial.print("ref - voltage ");
+        // Serial.println(ref_voltage, 6);
 
-        Serial.print("cell potential");
+        Serial.print("cell potential ");
         float cell_potential = work_voltage - ref_voltage;
-        Serial.prinln(cell_potential);
+        Serial.println(cell_potential, 6);
 
-        if (cell_potential < desired_potential) {
-          potential += 1;
-        }
+        delay(200);
       }
       break_condition = true;
     }
