@@ -146,9 +146,9 @@ class App:
                 self.stop()
                 break
             current_time = time() - self.start_time
-            self.data_list.append((current_value, current_time))
-            self.ax.clear()
-            self.ax.plot(*zip(*self.data_list))
+            self.data_list.append((current_time, float(current_value)))
+            # self.ax.clear()
+            # self.ax.plot(*zip(*self.data_list))
             sleep(0.1)
 
     def connect_to_arduino(self) -> None | Serial:
@@ -176,13 +176,12 @@ class App:
         accumulated_q = 0
         old_time = 0
 
-        for current, measured_time in self.data_list:
+        for measured_time, current in self.data_list:
             qx, _ = quad(lambda _, curr=current: curr, old_time, measured_time)
             accumulated_q += qx
             old_time = measured_time
 
-        q_carga = accumulated_q * total_time
-        mols = q_carga / (2 * 96485)
+        mols = accumulated_q / (2 * 96485)
         self.result_value.set(str(mols)[:8] + "mol.L^-1")
 
     def get_arduino_port(self) -> str | None:
@@ -200,7 +199,7 @@ class App:
         with open(f'output/{datetime.now().strftime("%Y%m%d%H%M%S")}.csv', "w+") as file:
             writer = DictWriter(file, fieldnames=["current", "time"])
             writer.writeheader()
-            for current, measured_time in self.data_list:
+            for measured_time, current in self.data_list:
                 writer.writerow({"current": current, "time": measured_time})
 
 
